@@ -1,5 +1,5 @@
 ---
-title: Protecting your payment form from attackers' bots using Turnstile
+title: Protect payment forms from malicious bots using Turnstile
 pcx_content_type: tutorial
 updated: 2024-11-11
 difficulty: Beginner
@@ -16,34 +16,33 @@ spotlight:
   author_bio_source: LinkedIn
 sidebar:
   order: 2
-
 ---
 
 import { Render, TabItem, Tabs } from "~/components";
 
-This tutorial shows how you can build a more secure payment form using Turnstile. You can learn how to block bot access on the checkout page and trigger additional authentication flows by integrating Turnstile with Stripe
-
+This tutorial shows how you can build a more secure payment form using Turnstile. You can learn how to block bot access on the checkout page and trigger additional authentication flows by integrating Turnstile with Stripe.
 
 ## Before you begin
 
-- You must have a Cloudflare account
-- You must have a Stripe account
+<Render file="prereqs" product="workers" />
+3. Sign up for a [Stripe](https://stripe.com) account.
 
+## 1. Get Your Turnstile sitekey and secret key
 
-## Get Your Turnstile sitekey and secret key
+First, you will need to prepare a Cloudflare Turnstile widget to use for this application.
 
 1. Log in to the [Cloudflare dashboard](https://dash.cloudflare.com/) and select your account.
 2. Go to **Turnstile** and [create a new Turnstile widget](/turnstile/get-started/).
 3. Copy the sitekey and the secret key to use in the next step.
 
-## 1. Create a new Worker project
+## 2. Create a new Worker project
 
-
-First, let's create a Cloudflare Workers project.
+Now that your Turnstile widget it ready to use, you can create your Worker application.
 
 <Render file="c3-definition" product="workers" />
 
 To efficiently create and manage multiple APIs, let's use [`Hono`](https://hono.dev). Hono is an open-source application framework released by a Cloudflare Developer Advocate. It is lightweight and allows for the creation of multiple API paths, as well as efficient request and response handling.
+
 Open your command line interface (CLI) and run the following command:
 
 <Tabs> <TabItem label="npm">
@@ -81,7 +80,6 @@ Need to install the following packages:
 create-hono@0.14.2
 Ok to proceed? (y) y
 ```
-
 
 During the setup, you will be asked if you want to manage your project source code with `Git`. It is recommended to answer `Yes` as it helps in recording your work and rolling back changes. You can also choose `No`, which will not affect the tutorial progress.
 
@@ -150,21 +148,19 @@ curl http://localhost:8787
 Hello Hono!
 ```
 
-So far, we've covered how to create a Cloudflare Worker project and introduced tools and open-source projects like the `C3` command and the `Hono` framework that streamline development with Cloudflare. Leveraging these features will help you develop applications on Cloudflare Workers more smoothly.
+So far, we've covered how to create a Worker project using `C3` and introduced the open source `Hono` framework that streamlines web-application development with Workers.
 
-## 2. Preparation for the building web application
+At the next step, we need to update the Hono project for supporting to web application.
 
-By the default, we need to update the Hono project for supporting to web application.
+## 3. Change index script file extension to .JSX
 
-### Change the file extension to support JSX
-
-Since we'll use JSX to dynamically create HTML, let's change `src/index.ts` to `src/index.tsx`.
+Since we will use JSX to dynamically create HTML, you will need to change `src/index.ts` to `src/index.tsx`.
 
 ```
 mv src/index.ts src/index.tsx
 ```
 
-At the same time, let's change the filename specified in the `wrangler.toml`.
+At the same time, change the filename specified in the `wrangler.toml`.
 
 ```diff
 #:schema node_modules/wrangler/config-schema.json
@@ -174,19 +170,15 @@ name = "secure-payment-form"
 compatibility_date = "2024-10-22"
 ```
 
-### Register Stripe API key and Turnstile key as environment variables
+## 4. Add the Stripe API key and Turnstile key as environment variables
 
-Let's register API keys as environment variables to use both Stripe and Cloudflare Turnstile.
+To connect your web application to both Stripe and Turnstile, you must register the necessary API keys for Stripe and Turnstile as environment variables within your application.
 
-You can obtain test site keys and secret keys for Cloudflare Turnstile from the documentation.
+You can obtain test site keys and secret keys for Turnstile from the [Turnstile documentation](/turnstile/reference/testing/).
 
-https://developers.cloudflare.com/turnstile/reference/testing/
+Get the publishable key and secret key for Stripe from the [Stripe dashboard].(https://dashboard.stripe.com/test/apikeys)
 
-Get the publishable key and secret key for Stripe from the Stripe dashboard.
-
-https://dashboard.stripe.com/test/apikeys
-
-And place each keys into the `.dev.vars` file like the following:
+Then, place each key into the `.dev.vars` file like the following:
 
 ```
 TURNSTILE_SITE_KEY = '1x00000000000000000000AA'
@@ -196,6 +188,7 @@ STRIPE_SECRET_KEY='Secret key starting with sk_test_'
 ```
 
 After that, you can generate TypeScript type definition by running the `npm run cf-typegen` command.
+
 ```sh
 $ npm run cf-typegen
 
@@ -212,17 +205,17 @@ interface CloudflareBindings {
 In local development using Hono and Wrangler, you can retrieve values set in `.dev.vars` like this:
 
 ```ts
-app.get('/hello', async c => {
-    console.log(c.env.TURNSTILE_SITE_KEY);
-    return c.json({ message: 'test' });
-})
+app.get("/hello", async (c) => {
+	console.log(c.env.TURNSTILE_SITE_KEY);
+	return c.json({ message: "test" });
+});
 ```
 
-Now we're ready for application development. In the next steps, we'll develop a payment form using Turnstile and Stripe.
+Now we are ready for application development. In the next steps, we will develop a payment form using Turnstile and Stripe.
 
-## 3. Implementing Bot Detection with Turnstile
+## 5. Implement Bot Detection with Turnstile
 
-Let's start by creating a form that uses Turnstile to detect bot access. Add the following code to `src/index.tsx` to create a simple form:
+Start by creating a form that uses Turnstile to detect bot access. Add the following code to `src/index.tsx` to create a simple form:
 
 ```ts
 import { Hono } from "hono";
@@ -247,8 +240,8 @@ export default app;
 
 ```
 
-Let's add JavaScript code to our application to implement bot detection using Turnstile.
-By adding this implementation, the order form submission process will be disabled until the Turnstile bot detection process is completed and it is confirmed that the access is not from a bot.
+Add JavaScript code to our application to implement bot detection using Turnstile.
+By adding this implementation, the order form submission process will be disabled until the Turnstile bot detection process is completed and it is confirmed that the access request is not from a bot.
 
 ```diff
 import { Hono } from "hono";
@@ -297,15 +290,15 @@ export default app;
 
 ```
 
-Here, we're loading the Turnstile script file with a `script` tag. The `_turnstileCB` function is executed when the script file loading is complete, triggered by the `onload=_turnstileCB` in the query string.
+This will load the Turnstile script file with a `script` tag. The `_turnstileCB` function is executed when the script file loading is complete, triggered by the `onload=_turnstileCB` in the query string.
 
 In the `_turnstileCB` function, `turnstile.render()` is executed. The `callback` set here removes the `disabled` attribute from the submit `button` of the `form`.
 
-This simple implementation prevents order operations for accesses that Cloudflare identifies as bots.
+This implementation blocks order operations for any requests that Cloudflare identifies as being made by a bots.
 
-## 4. Integrating Turnstile with a Stripe Payment Form
+## 6. Integrate Turnstile with a Stripe payment form
 
-For a more practical example, let's integrate Turnstile with a Stripe payment form. First, install the Stripe SDK:
+To integrate Turnstile with a Stripe payment form, first you will need to install the Stripe SDK:
 
 <Tabs> <TabItem label="npm">
 
@@ -327,8 +320,7 @@ pnpm add stripe
 
 </TabItem> </Tabs>
 
-Next, let's implement the code to create a payment form in `src/index.tsx`.
-First, create a [Payment Intent](https://docs.stripe.com/api/payment_intents) on the server side:
+Next, implement the code to create a payment form in `src/index.tsx`. The following code creates a [Payment Intent](https://docs.stripe.com/api/payment_intents) on the server side:
 
 ```diff
 import { Hono } from "hono";
@@ -358,7 +350,7 @@ app.get("/", async (c) => {
 
 ```
 
-And adding JavaScript code to display the payment form. Edit `src/index.tsx`:
+Then, add the following code to display the payment form. Edit `src/index.tsx`:
 
 ```diff
       {html`
@@ -431,98 +423,102 @@ The payment form is now ready. To experience how it behaves when a bot is detect
 +TURNSTILE_SITE_KEY = '2x00000000000000000000AB'
 ```
 
-If you restart the application now, you'll notice that you can't submit the payment form.
+If you restart the application now, you will notice that you cannot submit the payment form.
 
 ![Failed challenge](~/assets/images/turnstile/payment-form.png)
 
-This way, you can block requests trying to manipulate the payment form using bots, such as card testing attacks.
+This way, you can block requests that use bots to try and manipulate the payment form, such as card testing attacks.
 By verifying whether the `turnstileToken` is set by the `callback` of `turnstile.render()`, you can use Turnstile's result when processing the `form`'s `submit` event.
 
-Note: After completing the tests, let's make sure to revert the Turnstile SITE_KEY back to its original value.
+:::note
+After completing the tests, make sure to revert the Turnstile `SITE_KEY` back to its original value.
+
 ```diff
 +TURNSTILE_SITE_KEY = '1x00000000000000000000AA'
 -TURNSTILE_SITE_KEY = '2x00000000000000000000AB'
 ```
 
-## 5. Adding Server-Side Validation
+:::
 
-Let's add a step to verify that the token generated by the Turnstile widget is valid and not forged.
+## 7. Add Server-Side Validation
+
+Next, add a step to verify that the token generated by the Turnstile widget is valid and not forged.
 In this case, we'll add an API that performs additional validation and server-side processing based on the result of `turnstile.render`.
 
-First, for easier testing, let's remove the `disabled` attribute from the `button` tag:
+For easier testing, remove the `disabled` attribute from the `button` tag:
 
 ```diff
 -        <button type="submit" disabled>Order</button>
 +        <button type="submit" >Order</button>
 ```
 
-Next, let's add an API for server-side verification. Please add the following code to `src/index.tsx`.
+Next, add an API for server-side verification. Please add the following code to `src/index.tsx`.
 This API validates the Turnstile token generated by the client application and incorporates the result into Stripe's Payment Intent.
 
 ```ts
 import { HTTPException } from "hono/http-exception";
 
 type TurnstileResult = {
-  success: boolean;
-  challenge_ts: string;
-  hostname: string;
-  "error-codes": Array<string>;
-  action: string;
-  cdata: string;
+	success: boolean;
+	challenge_ts: string;
+	hostname: string;
+	"error-codes": Array<string>;
+	action: string;
+	cdata: string;
 };
 
 app.post("/pre-confirm", async (c) => {
-  const { TURNSTILE_SECRET_KEY, STRIPE_SECRET_KEY } = env(c);
-  const stripe = new Stripe(STRIPE_SECRET_KEY, {
-    apiVersion: "2024-10-28.acacia",
-    appInfo: {
-      name: "example/cloudflare-turnstile",
-    },
-  });
+	const { TURNSTILE_SECRET_KEY, STRIPE_SECRET_KEY } = env(c);
+	const stripe = new Stripe(STRIPE_SECRET_KEY, {
+		apiVersion: "2024-10-28.acacia",
+		appInfo: {
+			name: "example/cloudflare-turnstile",
+		},
+	});
 
-  const body = await c.req.json();
-  const ip = c.req.header("CF-Connecting-IP");
-  const paymentIntentId = body.payment_intent_id
+	const body = await c.req.json();
+	const ip = c.req.header("CF-Connecting-IP");
+	const paymentIntentId = body.payment_intent_id;
 
-  const formData = new FormData();
-  formData.append("secret", TURNSTILE_SECRET_KEY);
-  formData.append("response", body.turnstile_token);
-  formData.append("remoteip", ip || "");
-  const turnstileResult = await fetch(
-    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    {
-      body: formData,
-      method: "POST",
-    },
-  );
-  const outcome = await turnstileResult.json<TurnstileResult>();
+	const formData = new FormData();
+	formData.append("secret", TURNSTILE_SECRET_KEY);
+	formData.append("response", body.turnstile_token);
+	formData.append("remoteip", ip || "");
+	const turnstileResult = await fetch(
+		"https://challenges.cloudflare.com/turnstile/v0/siteverify",
+		{
+			body: formData,
+			method: "POST",
+		},
+	);
+	const outcome = await turnstileResult.json<TurnstileResult>();
 
-  await stripe.paymentIntents.update(paymentIntentId, {
-    metadata: {
-      turnstile_result: outcome.success ? 'success' : 'failed',
-      turnstile_challenge_ts: outcome.challenge_ts,
-    },
-  })
+	await stripe.paymentIntents.update(paymentIntentId, {
+		metadata: {
+			turnstile_result: outcome.success ? "success" : "failed",
+			turnstile_challenge_ts: outcome.challenge_ts,
+		},
+	});
 
-  if (!outcome.success) {
-    throw new HTTPException(401, {
-      res: new Response(
-        JSON.stringify({
-          success: outcome.success,
-          message: "Unauthorized",
-          error_codes: outcome["error-codes"],
-        }),
-      ),
-    });
-  }
-  return c.json({
-    success: outcome.success
-  });
+	if (!outcome.success) {
+		throw new HTTPException(401, {
+			res: new Response(
+				JSON.stringify({
+					success: outcome.success,
+					message: "Unauthorized",
+					error_codes: outcome["error-codes"],
+				}),
+			),
+		});
+	}
+	return c.json({
+		success: outcome.success,
+	});
 });
-
 ```
 
 Then, add the process to call the created API.
+
 By executing this before calling Stripe's JavaScript SDK in the form's submit event, we can decide whether to proceed with the payment based on the server-side validation result:
 
 ```diff
@@ -572,11 +568,13 @@ paymentForm.addEventListener("submit", async (e) => {
 ```
 
 By adding this step, we now perform a two-stage check using Turnstile before the payment process.
-Since we're saving the Turnstile authentication result in the Stripe data, it's also easier to investigate if a user reports a payment failure.
+
+Since we're saving the Turnstile authentication result in the Stripe data, it is also easier to investigate if a user reports a payment failure.
 
 If you want more strict control, you could add a process to invalidate the Stripe Payment Intent if authentication fails in the `POST /pre-confirm` API.
 
 ## Conclusion
 
-In online payments, it's necessary to protect applications from bot attacks such as card testing and DDoS.
+In online payments, it ss necessary to protect applications from bot attacks such as card testing and DDoS attacks.
+
 While payment services like Stripe are increasingly implementing bot prevention measures, adding Turnstile can provide an extra layer of security for your payment forms.
