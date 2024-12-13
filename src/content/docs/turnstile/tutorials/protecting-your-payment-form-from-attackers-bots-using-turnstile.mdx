@@ -41,7 +41,7 @@ Now that your Turnstile widget it ready to use, you can create your Worker appli
 
 <Render file="c3-definition" product="workers" />
 
-To efficiently create and manage multiple APIs, let's use [`Hono`](https://hono.dev). Hono is an open-source application framework released by a Cloudflare Developer Advocate. It is lightweight and allows for the creation of multiple API paths, as well as efficient request and response handling.
+To efficiently create and manage multiple APIs, let's use [`Hono`](https://hono.dev). It is lightweight and allows for the creation of multiple API paths, as well as efficient request and response handling.
 
 Open your command line interface (CLI) and run the following command:
 
@@ -176,7 +176,7 @@ To connect your web application to both Stripe and Turnstile, you must register 
 
 You can obtain test site keys and secret keys for Turnstile from the [Turnstile documentation](/turnstile/reference/testing/).
 
-Get the publishable key and secret key for Stripe from the [Stripe dashboard].(https://dashboard.stripe.com/test/apikeys)
+Get the publishable key and secret key for Stripe from the [Stripe dashboard](https://dashboard.stripe.com/test/apikeys).
 
 Then, place each key into the `.dev.vars` file like the following:
 
@@ -243,7 +243,7 @@ export default app;
 Add JavaScript code to our application to implement bot detection using Turnstile.
 By adding this implementation, the order form submission process will be disabled until the Turnstile bot detection process is completed and it is confirmed that the access request is not from a bot.
 
-```diff
+```diff lang="ts"
 import { Hono } from "hono";
 +import { env } from "hono/adapter";
 +import { html } from "hono/html";
@@ -322,7 +322,7 @@ pnpm add stripe
 
 Next, implement the code to create a payment form in `src/index.tsx`. The following code creates a [Payment Intent](https://docs.stripe.com/api/payment_intents) on the server side:
 
-```diff
+```diff lang="ts"
 import { Hono } from "hono";
 import { env } from "hono/adapter";
 import { html } from "hono/html";
@@ -352,7 +352,7 @@ app.get("/", async (c) => {
 
 Then, add the following code to display the payment form. Edit `src/index.tsx`:
 
-```diff
+```diff lang="ts"
       {html`
 +        <script src="https://js.stripe.com/v3/"></script>
         <script
@@ -521,7 +521,7 @@ Then, add the process to call the created API.
 
 By executing this before calling Stripe's JavaScript SDK in the form's submit event, we can decide whether to proceed with the payment based on the server-side validation result:
 
-```diff
+```diff lang="ts"
 paymentForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!turnstileToken) {
@@ -575,6 +575,6 @@ If you want more strict control, you could add a process to invalidate the Strip
 
 ## Conclusion
 
-In online payments, it ss necessary to protect applications from bot attacks such as card testing and DDoS attacks.
+In online payments, it is necessary to protect applications from bot attacks such as card testing and DDoS attacks.
 
 While payment services like Stripe are increasingly implementing bot prevention measures, adding Turnstile can provide an extra layer of security for your payment forms.
